@@ -39,11 +39,10 @@
 <script>
     // Configuración de Supabase
     const SUPABASE_URL = 'https://iscxzbqptivhkrzquxmp.supabase.co';
-    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ucH0yLjt5ulNXJ5vqAeFQA_ZhVZ6FHS'; 
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ucH0yLjt5ulNXJ5vqAeFQA_ZhVZ6FHS';
     
     // Inicializar cliente Supabase v2
-    const supabaseClient = supabase.createClient(SUPABASE_URL, 'https://iscxzbqptivhkrzquxmp.supabase.co.sb_publishable_ucH0yLjt5ulNXJ5vqAeFQA_ZhVZ6FHS'); 
-    // Nota: Asegúrate de usar tu llave anon real si la tenías distinta, o déjala como estaba en tu proyecto anterior.
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
     // Obtener parámetro 'codigo' de la URL (ej: ?codigo=MP-001)
     const urlParams = new URLSearchParams(window.location.search);
@@ -250,10 +249,8 @@
             if (errMov) throw errMov;
 
             // 2. Actualizar existencias en la tabla existencias
-            // (Para simplificar el prototipo de 2 horas, actualizamos la tabla de existencias según la ubicación afectada)
             let ubiAfectada = (tipo === 'SALIDA') ? ubicacionDestino : ubicacionDestino;
             
-            // Consultar si ya existe registro para este material en esta ubicación
             const { data: exExist } = await supabaseClient
                 .from('existencias')
                 .select('*')
@@ -278,7 +275,6 @@
                         .eq('id', exExist.id);
                 }
             } else if (tipo === 'TRANSFERENCIA') {
-                // Restar de origen
                 const { data: exOrig } = await supabaseClient
                     .from('existencias')
                     .select('*')
@@ -292,7 +288,6 @@
                         .eq('id', exOrig.id);
                 }
 
-                // Sumar a destino
                 if (exExist) {
                     await supabaseClient.from('existencias')
                         .update({ cantidad: Number(exExist.cantidad) + cantidad })
