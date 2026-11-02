@@ -106,36 +106,46 @@
     EL ROBLE | Control de materiales y producción
   </footer>
 
-  <script>
-    const materiales = {
-      "MP-001": {
-        codigo: "MP-001",
-        tipo: "MP",
-        descripcion: "Tarimas recuperadas",
-        unidad: "Pieza"
-      }
-    };
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    function consultarMaterial() {
-      const parametros = new URLSearchParams(
-        window.location.search
-      );
+<script>
+  const SUPABASE_URL = "url:  https://iscxzbqptivhkrzquxmp.supabase.co/rest/v1/";
+  const SUPABASE_KEY = "sb_publishable_ucH0yLjt5ulNXJ5vqAeFQA_ZhVZ6FHS";
 
-      const codigo = (
-        parametros.get("codigo") || ""
-      ).trim().toUpperCase();
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
-      const resultado = document.getElementById("resultado");
+  async function consultarMaterial() {
+    const parametros = new URLSearchParams(
+      window.location.search
+    );
 
-      if (!codigo) {
-        resultado.innerHTML =
-          '<div class="mensaje">No se recibió un código de material.</div>';
-        return;
-      }
+    const codigo = (
+      parametros.get("codigo") || ""
+    ).trim().toUpperCase();
 
-      const material = materiales[codigo];
+    const resultado = document.getElementById("resultado");
 
-      if (!material) {
+    if (!codigo) {
+      resultado.innerHTML =
+        '<div class="mensaje">No se recibió un código de material.</div>';
+      return;
+    }
+
+    resultado.textContent = "Consultando base de datos...";
+
+    try {
+      const { data, error } = await supabaseClient
+        .from("catalogo")
+        .select("codigo, tipo, descripcion, unidad")
+        .eq("codigo", codigo)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
         resultado.innerHTML =
           '<div class="mensaje">Material no encontrado: ' +
           escapar(codigo) + '</div>';
@@ -148,41 +158,49 @@
 
           <div class="dato">
             <strong>Código</strong>
-            ${escapar(material.codigo)}
+            ${escapar(data.codigo)}
           </div>
 
           <div class="dato">
             <strong>Tipo</strong>
-            ${escapar(material.tipo)}
+            ${escapar(data.tipo)}
           </div>
 
           <div class="dato">
             <strong>Descripción</strong>
-            ${escapar(material.descripcion)}
+            ${escapar(data.descripcion)}
           </div>
 
           <div class="dato">
             <strong>Unidad</strong>
-            ${escapar(material.unidad)}
+            ${escapar(data.unidad)}
           </div>
         </div>
       `;
-    }
 
-    function escapar(valor) {
-      return String(valor).replace(/[&<>"']/g, function(c) {
-        return {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        }[c];
-      });
-    }
+    } catch (error) {
+      console.error("Error de consulta:", error);
 
-    consultarMaterial();
-  </script>
+      resultado.innerHTML =
+        '<div class="mensaje">No fue posible consultar la base de datos. Revisa la conexión y los permisos.</div>';
+    }
+  }
+
+  function escapar(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, function(c) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[c];
+    });
+  }
+
+  consultarMaterial();
+</script>
+
 
 </body>
 </html>
