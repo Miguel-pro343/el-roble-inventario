@@ -1,206 +1,320 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#263d32">
-  <title>EL ROBLE | Control de materiales</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: #f1f3f1;
-      color: #263d32;
-    }
-
-    header {
-      background: #263d32;
-      color: white;
-      text-align: center;
-      padding: 28px 15px;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 30px;
-      letter-spacing: 4px;
-    }
-
-    header p {
-      font-size: 12px;
-      letter-spacing: 2px;
-    }
-
-    main {
-      max-width: 650px;
-      margin: 35px auto;
-      padding: 15px;
-    }
-
-    .panel {
-      background: white;
-      padding: 28px;
-      border-radius: 12px;
-      box-shadow: 0 3px 15px #00000012;
-    }
-
-    h2 {
-      margin-top: 0;
-    }
-
-    .dato {
-      padding: 14px 5px;
-      border-bottom: 1px solid #eee;
-    }
-
-    .dato strong {
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    .material {
-      border-left: 4px solid #395846;
-      padding-left: 15px;
-      margin-top: 20px;
-    }
-
-    .mensaje {
-      padding: 15px;
-      border-radius: 7px;
-      background: #f4eeee;
-      color: #963333;
-    }
-
-    footer {
-      text-align: center;
-      color: #777;
-      padding: 25px;
-      font-size: 12px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fábrica de Mesas "El Roble" - Inventario QR</title>
+    <!-- Supabase JS v2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #8B4513; text-align: center; font-size: 24px; margin-bottom: 5px; }
+        h2 { color: #555; font-size: 18px; border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-top: 20px; }
+        .info-box { background: #faf0e6; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 5px solid #8B4513; }
+        .info-box p { margin: 8px 0; font-size: 16px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #8B4513; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; margin-top: 15px; }
+        button:hover { background-color: #a0522d; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .alert { padding: 10px; margin-top: 15px; border-radius: 4px; text-align: center; font-weight: bold; }
+        .alert-success { background-color: #d4edda; color: #155724; }
+        .alert-error { background-color: #f8d7da; color: #721c24; }
+    </style>
 </head>
-
 <body>
 
-  <header>
-    <h1>EL ROBLE</h1>
-    <p>SISTEMA DE CONTROL DE MATERIALES</p>
-  </header>
+<div class="container">
+    <h1>Fábrica de Mesas "El Roble"</h1>
+    <p style="text-align: center; color: #666; margin-top: 0;">Sistema de Control de Inventario por Códigos QR</p>
 
-  <main>
-    <section class="panel">
-      <h2>Consulta de materiales</h2>
-      <p>Información del material registrado en el sistema.</p>
-
-      <div id="resultado"></div>
-    </section>
-  </main>
-
-  <footer>
-    EL ROBLE | Control de materiales y producción
-  </footer>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <div id="resultado">
+        <p style="text-align: center;">Cargando información del material...</p>
+    </div>
+</div>
 
 <script>
-  const SUPABASE_URL = "https://iscxzbqptivhkrzquxmp.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_ucH0yLjt5ulNXJ5vqAeFQA_ZhVZ6FHS";
+    // Configuración de Supabase
+    const SUPABASE_URL = 'https://iscxzbqptivhkrzquxmp.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_ucH0yLjt5ulNXJ5vqAeFQA_ZhVZ6FHS'; 
+    
+    // Inicializar cliente Supabase v2
+    const supabaseClient = supabase.createClient(SUPABASE_URL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzY3h6YnFwdGl2aGtyenF1eG1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyOTIzMjZ9.PONER_TU_ANON_KEY_REAL_AQUI'); 
+    // Nota: Asegúrate de usar tu llave anon real si la tenías distinta, o déjala como estaba en tu proyecto anterior.
 
-  const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+    // Obtener parámetro 'codigo' de la URL (ej: ?codigo=MP-001)
+    const urlParams = new URLSearchParams(window.location.search);
+    const codigoMaterial = urlParams.get('codigo');
 
-  async function consultarMaterial() {
-    const parametros = new URLSearchParams(
-      window.location.search
-    );
+    async function cargarDatosMaterial() {
+        const contenedor = document.getElementById('resultado');
 
-    const codigo = (
-      parametros.get("codigo") || ""
-    ).trim().toUpperCase();
+        if (!codigoMaterial) {
+            contenedor.innerHTML = `
+                <div class="info-box">
+                    <h3>Ningún material seleccionado</h3>
+                    <p>Por favor, escanea un código QR válido o ingresa un código en la URL (ejemplo: <code>?codigo=MP-001</code>).</p>
+                </div>
+            `;
+            return;
+        }
 
-    const resultado = document.getElementById("resultado");
+        try {
+            // 1. Consultar el catálogo maestro
+            const { data: material, error: errMat } = await supabaseClient
+                .from('catalogo')
+                .select('*')
+                .eq('codigo', codigoMaterial)
+                .single();
 
-    if (!codigo) {
-      resultado.innerHTML =
-        '<div class="mensaje">No se recibió un código de material.</div>';
-      return;
+            if (errMat || !material) {
+                contenedor.innerHTML = `<div class="alert alert-error">El material con código "<strong>${codigoMaterial}</strong>" no fue encontrado en el catálogo.</div>`;
+                return;
+            }
+
+            // 2. Consultar existencias actuales del material
+            const { data: existencias, error: errEx } = await supabaseClient
+                .from('existencias')
+                .select('*, ubicaciones(nombre)')
+                .eq('material_codigo', codigoMaterial);
+
+            let totalExistencia = 0;
+            let detalleUbicaciones = '';
+
+            if (existencias && existencias.length > 0) {
+                existencias.forEach(ex => {
+                    totalExistencia += Number(ex.cantidad);
+                    detalleUbicaciones += `<li><strong>${ex.ubicaciones ? ex.ubicaciones.nombre : ex.ubicacion_codigo}:</strong> ${ex.cantidad} ${material.unidad}</li>`;
+                });
+            } else {
+                detalleUbicaciones = '<li>Sin existencia registrada en ubicaciones.</li>';
+            }
+
+            // 3. Consultar historial de movimientos
+            const { data: movimientos } = await supabaseClient
+                .from('movimientos')
+                .select('*')
+                .eq('material_codigo', codigoMaterial)
+                .order('fecha', { ascending: false })
+                .limit(5);
+
+            let tablaMovimientos = '';
+            if (movimientos && movimientos.length > 0) {
+                movimientos.forEach(m => {
+                    tablaMovimientos += `
+                        <tr>
+                            <td>${new Date(m.fecha).toLocaleString()}</td>
+                            <td><strong>${m.tipo_movimiento}</strong></td>
+                            <td>${m.cantidad}</td>
+                            <td>${m.ubicacion_origen || '-'}</td>
+                            <td>${m.ubicacion_destino || '-'}</td>
+                            <td>${m.observaciones || ''}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tablaMovimientos = `<tr><td colspan="6" style="text-align: center;">No hay movimientos registrados.</td></tr>`;
+            }
+
+            // 4. Renderizar la interfaz completa
+            contenedor.innerHTML = `
+                <div class="info-box">
+                    <p><strong>Código:</strong> ${material.codigo}</p>
+                    <p><strong>Descripción:</strong> ${material.descripcion}</p>
+                    <p><strong>Tipo:</strong> ${material.tipo}</p>
+                    <p><strong>Existencia Total:</strong> <span style="font-size: 20px; color: #8B4513;">${totalExistencia}</span> ${material.unidad}</p>
+                    <p><strong>Ubicaciones actuales:</strong></p>
+                    <ul style="margin: 5px 0; padding-left: 20px;">${detalleUbicaciones}</ul>
+                </div>
+
+                <h2>Registrar Movimiento</h2>
+                <form id="formMovimiento">
+                    <label for="tipo">Tipo de Movimiento:</label>
+                    <select id="tipo" required onchange="cambiarTipoMovimiento()">
+                        <option value="ENTRADA">Entrada</option>
+                        <option value="SALIDA">Salida</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                    </select>
+
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="number" id="cantidad" step="any" min="0.01" required placeholder="Ej. 10">
+
+                    <div id="campoOrigen" style="display:none;">
+                        <label for="origen">Ubicación de Origen:</label>
+                        <select id="origen">
+                            <option value="ALM-01">Almacén de materia prima</option>
+                            <option value="COR-01">Área de corte</option>
+                            <option value="ENS-01">Área de ensamblaje</option>
+                            <option value="ACA-01">Área de acabado</option>
+                            <option value="EMP-01">Área de empaque</option>
+                            <option value="PT-01">Almacén de producto terminado</option>
+                            <option value="RES-01">Área de residuos</option>
+                        </select>
+                    </div>
+
+                    <label for="destino" id="labelDestino">Ubicación de Destino / Almacenamiento:</label>
+                    <select id="destino">
+                        <option value="ALM-01">Almacén de materia prima</option>
+                        <option value="COR-01">Área de corte</option>
+                        <option value="ENS-01">Área de ensamblaje</option>
+                        <option value="ACA-01">Área de acabado</option>
+                        <option value="EMP-01">Área de empaque</option>
+                        <option value="PT-01">Almacén de producto terminado</option>
+                        <option value="RES-01">Área de residuos</option>
+                    </select>
+
+                    <label for="observaciones">Observaciones:</label>
+                    <textarea id="observaciones" rows="2" placeholder="Ej. Recepción de proveedor / Lote inicial"></textarea>
+
+                    <button type="submit">Guardar Movimiento</button>
+                </form>
+                <div id="mensajeResultado"></div>
+
+                <h2>Historial Reciente</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Cant.</th>
+                            <th>Origen</th>
+                            <th>Destino</th>
+                            <th>Obs.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tablaMovimientos}
+                    </tbody>
+                </table>
+            `;
+
+            // Vincular el evento submit del formulario
+            document.getElementById('formMovimiento').addEventListener('submit', function(e) {
+                e.preventDefault();
+                registrarMovimiento(totalExistencia);
+            });
+
+        } catch (err) {
+            console.error(err);
+            contenedor.innerHTML = `<div class="alert alert-error">Ocurrió un error al cargar la información del material.</div>`;
+        }
     }
 
-    resultado.textContent = "Consultando base de datos...";
+    function cambiarTipoMovimiento() {
+        const tipo = document.getElementById('tipo').value;
+        const campoOrigen = document.getElementById('campoOrigen');
+        const labelDestino = document.getElementById('labelDestino');
 
-    try {
-      const { data, error } = await supabaseClient
-        .from("catalogo")
-        .select("codigo, tipo, descripcion, unidad")
-        .eq("codigo", codigo)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (!data) {
-        resultado.innerHTML =
-          '<div class="mensaje">Material no encontrado: ' +
-          escapar(codigo) + '</div>';
-        return;
-      }
-
-      resultado.innerHTML = `
-        <div class="material">
-          <h3>Material encontrado</h3>
-
-          <div class="dato">
-            <strong>Código</strong>
-            ${escapar(data.codigo)}
-          </div>
-
-          <div class="dato">
-            <strong>Tipo</strong>
-            ${escapar(data.tipo)}
-          </div>
-
-          <div class="dato">
-            <strong>Descripción</strong>
-            ${escapar(data.descripcion)}
-          </div>
-
-          <div class="dato">
-            <strong>Unidad</strong>
-            ${escapar(data.unidad)}
-          </div>
-        </div>
-      `;
-
-    } catch (error) {
-      console.error("Error de consulta:", error);
-
-      resultado.innerHTML =
-        '<div class="mensaje">No fue posible consultar la base de datos. Revisa la conexión y los permisos.</div>';
+        if (tipo === 'ENTRADA') {
+            campoOrigen.style.display = 'none';
+            labelDestino.innerText = 'Ubicación de Destino:';
+        } else if (tipo === 'SALIDA') {
+            campoOrigen.style.display = 'block';
+            labelDestino.innerText = 'Ubicación de Retiro (Origen):';
+        } else if (tipo === 'TRANSFERENCIA') {
+            campoOrigen.style.display = 'block';
+            labelDestino.innerText = 'Ubicación de Destino:';
+        }
     }
-  }
 
-  function escapar(valor) {
-    return String(valor ?? "").replace(/[&<>"']/g, function(c) {
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-      }[c];
-    });
-  }
+    async function registrarMovimiento(existenciaActualTotal) {
+        const tipo = document.getElementById('tipo').value;
+        const cantidad = Number(document.getElementById('cantidad').value);
+        const observaciones = document.getElementById('observaciones').value;
+        const ubicacionDestino = document.getElementById('destino').value;
+        const ubicacionOrigen = document.getElementById('origen').value;
+        const mensajeDiv = document.getElementById('mensajeResultado');
 
-  consultarMaterial();
+        // Validación básica de salidas
+        if (tipo === 'SALIDA' && cantidad > existenciaActualTotal) {
+            mensajeDiv.innerHTML = `<div class="alert alert-error" style="margin-top:10px;">Error: La cantidad a retirar es mayor a la existencia total disponible (${existenciaActualTotal}).</div>`;
+            return;
+        }
+
+        try {
+            // 1. Insertar el movimiento en la tabla movimientos
+            const { error: errMov } = await supabaseClient
+                .from('movimientos')
+                .insert([{
+                    material_codigo: codigoMaterial,
+                    tipo_movimiento: tipo,
+                    cantidad: cantidad,
+                    ubicacion_origen: (tipo === 'ENTRADA') ? null : (tipo === 'TRANSFERENCIA' ? ubicacionOrigen : ubicacionDestino),
+                    ubicacion_destino: (tipo === 'SALIDA') ? null : ubicacionDestino,
+                    observaciones: observaciones
+                }]);
+
+            if (errMov) throw errMov;
+
+            // 2. Actualizar existencias en la tabla existencias
+            // (Para simplificar el prototipo de 2 horas, actualizamos la tabla de existencias según la ubicación afectada)
+            let ubiAfectada = (tipo === 'SALIDA') ? ubicacionDestino : ubicacionDestino;
+            
+            // Consultar si ya existe registro para este material en esta ubicación
+            const { data: exExist } = await supabaseClient
+                .from('existencias')
+                .select('*')
+                .eq('material_codigo', codigoMaterial)
+                .eq('ubicacion_codigo', ubiAfectada)
+                .maybeSingle();
+
+            if (tipo === 'ENTRADA') {
+                if (exExist) {
+                    await supabaseClient.from('existencias')
+                        .update({ cantidad: Number(exExist.cantidad) + cantidad })
+                        .eq('id', exExist.id);
+                } else {
+                    await supabaseClient.from('existencias')
+                        .insert([{ material_codigo: codigoMaterial, ubicacion_codigo: ubiAfectada, cantidad: cantidad }]);
+                }
+            } else if (tipo === 'SALIDA') {
+                if (exExist) {
+                    let nuevaCant = Number(exExist.cantidad) - cantidad;
+                    await supabaseClient.from('existencias')
+                        .update({ cantidad: nuevaCant < 0 ? 0 : nuevaCant })
+                        .eq('id', exExist.id);
+                }
+            } else if (tipo === 'TRANSFERENCIA') {
+                // Restar de origen
+                const { data: exOrig } = await supabaseClient
+                    .from('existencias')
+                    .select('*')
+                    .eq('material_codigo', codigoMaterial)
+                    .eq('ubicacion_codigo', ubicacionOrigen)
+                    .maybeSingle();
+                
+                if (exOrig) {
+                    await supabaseClient.from('existencias')
+                        .update({ cantidad: Math.max(0, Number(exOrig.cantidad) - cantidad) })
+                        .eq('id', exOrig.id);
+                }
+
+                // Sumar a destino
+                if (exExist) {
+                    await supabaseClient.from('existencias')
+                        .update({ cantidad: Number(exExist.cantidad) + cantidad })
+                        .eq('id', exExist.id);
+                } else {
+                    await supabaseClient.from('existencias')
+                        .insert([{ material_codigo: codigoMaterial, ubicacion_codigo: ubicacionDestino, cantidad: cantidad }]);
+                }
+            }
+
+            mensajeDiv.innerHTML = `<div class="alert alert-success" style="margin-top:10px;">¡Movimiento registrado con éxito! Actualizando...</div>`;
+            setTimeout(() => { location.reload(); }, 1500);
+
+        } catch (err) {
+            console.error(err);
+            mensajeDiv.innerHTML = `<div class="alert alert-error" style="margin-top:10px;">Error al registrar el movimiento. Revisa la consola.</div>`;
+        }
+    }
+
+    // Ejecutar al cargar la página
+    cargarDatosMaterial();
 </script>
-
 
 </body>
 </html>
